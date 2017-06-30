@@ -5,6 +5,7 @@ interface
 uses
   Winapi.Windows,
   Winapi.Messages,
+  Winapi.CommCtrl,
   System.Classes,
   Vcl.ComCtrls,
   Vcl.StdCtrls;
@@ -19,7 +20,11 @@ type
     FEditorItemIndex, FEditorSubItemIndex: Integer;
     FCursorPos: TPoint;
 
+    // Create native item
+    function CreateItem(Index: Integer; ListItem: TListItem): TLVItem;
+    // Free TEdit
     procedure FreeEditorItemInstance;
+    // Invalidate cursor position
     procedure ResetCursorPos;
 
     {
@@ -53,8 +58,7 @@ type
 implementation
 
 uses
-  Vcl.Controls,
-  Winapi.CommCtrl;
+  Vcl.Controls;
 
 { TListView }
 
@@ -69,10 +73,8 @@ end;
 constructor TListView.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
-  // Register TEdit class
-  RegisterClass(TEdit);
   // Create the TEdit and assign the OnExit event
-  FListViewEditor := TEdit.Create(Self);
+  FListViewEditor := TEdit.Create(AOwner);
   with FListViewEditor do
   begin
     Parent := Self;
@@ -88,8 +90,6 @@ destructor TListView.Destroy;
 begin
   // Free TEdit
   FListViewEditor.Free;
-  // UnRegister TEdit class
-  RegisterClass(TEdit);
   inherited;
 end;
 
@@ -121,6 +121,9 @@ begin
     Exit;
 
   CurrentItem := Items[ItemIndex];
+
+  if not CanEdit(CurrentItem) then
+    Exit;
 
   // Get bounds
   ListView_GetSubItemRect(Handle, FEditorItemIndex, FEditorSubItemIndex, LVIR_LABEL, @Rect);
@@ -162,6 +165,27 @@ begin
     EditCaptionAt(FCursorPos);
 end;
 
+///
+/// Create a LVItem
+///
+function TListView.CreateItem(Index: Integer; ListItem: TListItem): TLVItem;
+begin
+  with Result do
+  begin
+    mask := LVIF_PARAM or LVIF_IMAGE or LVIF_GROUPID;
+    iItem := index;
+    iSubItem := 0;
+    iImage := I_IMAGECALLBACK;
+    iGroupId := -1;
+    pszText := PChar(ListItem.Caption);
+{$IFDEF CLR}
+    lParam := ListItem.GetHashCode;
+{$ELSE}
+    lParam := Winapi.Windows.lParam(ListItem);
+{$ENDIF}
+  end;
+end;
+
 procedure TListView.ListViewEditorExit(Sender: TObject);
 begin
   // I have an instance?
@@ -173,6 +197,10 @@ begin
     Items[FEditorItemIndex].Caption := FListViewEditor.Text
   else
     Items[FEditorItemIndex].SubItems[FEditorSubItemIndex - 1] := FListViewEditor.Text;
+
+  // Raise OnEdited event
+  Edit(CreateItem(FEditorItemIndex, Items[FEditorItemIndex]));
+
   // Free instanse
   FreeEditorItemInstance;
 end;

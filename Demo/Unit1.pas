@@ -24,10 +24,16 @@ type
     N1: TMenuItem;
     Panel1: TPanel;
     LabelTitle: TLabel;
+    ComboBox1: TComboBox;
     procedure FormCreate(Sender: TObject);
     procedure Edit1Click(Sender: TObject);
     procedure Remove1Click(Sender: TObject);
     procedure Create1Click(Sender: TObject);
+    procedure ListView1Edited(Sender: TObject; Item: TListItem; var S: string);
+    procedure ListView1Editing(Sender: TObject; Item: TListItem;
+      var AllowEdit: Boolean);
+    procedure Button1Click(Sender: TObject);
+    procedure ComboBox1Change(Sender: TObject);
   private
     { Private declarations }
   public
@@ -39,9 +45,22 @@ var
 
 implementation
 
+uses
+  Winapi.Windows;
 
 {$R *.dfm}
 
+
+procedure TForm1.Button1Click(Sender: TObject);
+begin
+  ListView1.Parent := nil;
+  ListView1.Parent := Self;
+end;
+
+procedure TForm1.ComboBox1Change(Sender: TObject);
+begin
+  ListView1.ViewStyle := TViewStyle(ComboBox1.ItemIndex);
+end;
 
 procedure TForm1.Create1Click(Sender: TObject);
 var
@@ -84,6 +103,17 @@ begin
     Item.SubItems.Add(Format('%d.%d', [I, 5]));
   end;
 
+end;
+
+procedure TForm1.ListView1Edited(Sender: TObject; Item: TListItem; var S: string);
+begin
+  if Application.MessageBox('Var "S" only take effect on caption', 'Override caption? ', MB_YESNO) = IDYES then
+    S := 'Override!';
+end;
+
+procedure TForm1.ListView1Editing(Sender: TObject; Item: TListItem; var AllowEdit: Boolean);
+begin
+  AllowEdit := Application.MessageBox(PChar(Item.Caption), 'Can edit?', MB_YESNO) = IDYES;
 end;
 
 procedure TForm1.Remove1Click(Sender: TObject);

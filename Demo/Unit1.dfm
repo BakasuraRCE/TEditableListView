@@ -47,8 +47,8 @@ object Form1: TForm1
     PopupMenu = PopupMenu1
     TabOrder = 0
     ViewStyle = vsReport
-    ExplicitTop = 13
-    ExplicitHeight = 323
+    OnEdited = ListView1Edited
+    OnEditing = ListView1Editing
   end
   object Panel1: TPanel
     Left = 0
@@ -60,14 +60,32 @@ object Form1: TForm1
     TabOrder = 1
     object LabelTitle: TLabel
       Left = 0
-      Top = 7
+      Top = 12
       Width = 844
-      Height = 18
+      Height = 13
       Align = alBottom
       Alignment = taCenter
       Caption = 
         'Click on field and press F2 to edit the field, or right click an' +
         'd Edit'
+      ExplicitTop = 7
+      ExplicitWidth = 306
+    end
+    object ComboBox1: TComboBox
+      Left = 696
+      Top = 2
+      Width = 145
+      Height = 21
+      Style = csDropDownList
+      ItemIndex = 3
+      TabOrder = 0
+      Text = 'vsReport'
+      OnChange = ComboBox1Change
+      Items.Strings = (
+        'vsIcon'
+        'vsSmallIcon'
+        'vsList'
+        'vsReport')
     end
   end
   object PopupMenu1: TPopupMenu
